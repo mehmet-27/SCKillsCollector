@@ -1,0 +1,6 @@
+name: SCKillsCollector
+version: ${project.version}
+main: com.mehmet_27.sckillscollector.SCKillsCollector
+api-version: 1.17
+authors: [ Mehmet_27 ]
+description: Clan kill collector for SimpleClans plugin
