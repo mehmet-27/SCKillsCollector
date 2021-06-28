@@ -33,59 +33,50 @@ public class SQLGetter {
 
 
     public void loadClans() {
-        Bukkit.getScheduler().runTaskAsynchronously(SCKillsCollector.getInstance(), new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    PreparedStatement ps = connection.prepareStatement("SELECT * FROM `sc_clans`");
-                    ResultSet results = ps.executeQuery();
-                    while (results.next()) {
-                        String clan = results.getString("name");
-                        String tag = results.getString("tag");
-                        addClan(clan, tag);
-                    }
-                    plugin.getLogger().info(Utils.color("&aClans loaded."));
-                } catch (SQLException e) {
-                    e.printStackTrace();
+        Bukkit.getScheduler().runTaskAsynchronously(SCKillsCollector.getInstance(), () -> {
+            try {
+                PreparedStatement ps = connection.prepareStatement("SELECT * FROM `sc_clans`");
+                ResultSet results = ps.executeQuery();
+                while (results.next()) {
+                    String clan = results.getString("name");
+                    String tag = results.getString("tag");
+                    addClan(clan, tag);
                 }
+                plugin.getLogger().info(Utils.color("&aClans loaded."));
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
         });
     }
 
     public void addClan(String clan, String tag) {
-        Bukkit.getScheduler().runTaskAsynchronously(SCKillsCollector.getInstance(), new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    PreparedStatement ps = connection.prepareStatement("INSERT IGNORE INTO sc_clankills (`clan`, `tag`) VALUES (?,?)");
-                    ps.setString(1, clan);
-                    ps.setString(2, tag);
-                    ps.executeUpdate();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
+        Bukkit.getScheduler().runTaskAsynchronously(SCKillsCollector.getInstance(), () -> {
+            try {
+                PreparedStatement ps = connection.prepareStatement("INSERT IGNORE INTO sc_clankills (`clan`, `tag`) VALUES (?,?)");
+                ps.setString(1, clan);
+                ps.setString(2, tag);
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
         });
     }
 
     public void loadKills() {
-        Bukkit.getScheduler().runTaskAsynchronously(SCKillsCollector.getInstance(), new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    PreparedStatement ps = connection.prepareStatement("SELECT * FROM `sc_players`");
-                    ResultSet results = ps.executeQuery();
-                    while (results.next()) {
-                        String clan = results.getString("tag");
-                        int neutralKills = results.getInt("neutral_kills");
-                        int rivalKills = results.getInt("rival_kills");
-                        int civilianKills = results.getInt("civilian_kills");
-                        int totalKills = neutralKills + rivalKills + civilianKills;
-                        addKill(clan, totalKills);
-                    }
-                } catch (SQLException e) {
-                    e.printStackTrace();
+        Bukkit.getScheduler().runTaskAsynchronously(SCKillsCollector.getInstance(), () -> {
+            try {
+                PreparedStatement ps = connection.prepareStatement("SELECT * FROM `sc_players`");
+                ResultSet results = ps.executeQuery();
+                while (results.next()) {
+                    String clan = results.getString("tag");
+                    int neutralKills = results.getInt("neutral_kills");
+                    int rivalKills = results.getInt("rival_kills");
+                    int civilianKills = results.getInt("civilian_kills");
+                    int totalKills = neutralKills + rivalKills + civilianKills;
+                    addKill(clan, totalKills);
                 }
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
         });
     }
@@ -93,18 +84,15 @@ public class SQLGetter {
     public void addKill(String clanTag, int kill) {
         int oldKills = getClanKills(clanTag);
         int newKills = oldKills + kill;
-        Bukkit.getScheduler().runTaskAsynchronously(SCKillsCollector.getInstance(), new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    PreparedStatement ps = connection.prepareStatement("UPDATE `sc_clankills` SET `kills` = ? WHERE `tag` = ?");
-                    ps.setInt(1, newKills);
-                    ps.setString(2, clanTag);
-                    ps.executeUpdate();
-                    plugin.getLogger().info("kill added " + kill + " " + clanTag + " old kills: " + oldKills);
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
+        Bukkit.getScheduler().runTaskAsynchronously(SCKillsCollector.getInstance(), () -> {
+            try {
+                PreparedStatement ps = connection.prepareStatement("UPDATE `sc_clankills` SET `kills` = ? WHERE `tag` = ?");
+                ps.setInt(1, newKills);
+                ps.setString(2, clanTag);
+                ps.executeUpdate();
+                plugin.getLogger().info("kill added " + kill + " " + clanTag + " old kills: " + oldKills);
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
         });
     }
@@ -126,17 +114,29 @@ public class SQLGetter {
     }
 
     public void deleteClan(String clanTag) {
-        Bukkit.getScheduler().runTaskAsynchronously(SCKillsCollector.getInstance(), new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    PreparedStatement ps = connection.prepareStatement("DELETE FROM `sc_clankills` WHERE tag = ?");
-                    ps.setString(1, clanTag);
-                    ps.executeUpdate();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
+        Bukkit.getScheduler().runTaskAsynchronously(SCKillsCollector.getInstance(), () -> {
+            try {
+                PreparedStatement ps = connection.prepareStatement("DELETE FROM `sc_clankills` WHERE tag = ?");
+                ps.setString(1, clanTag);
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
         });
+    }
+    public void UpdateAllKills(){
+        Bukkit.getScheduler().runTaskAsynchronously(SCKillsCollector.getInstance(), () -> {
+            try {
+                PreparedStatement ps = connection.prepareStatement("UPDATE `sc_clankills` SET `kills` = 0 WHERE `tag`");
+                ps.executeUpdate();
+            }catch (SQLException e){
+                e.printStackTrace();
+            }
+        });
+        loadClans();
+        loadKills();
+        if(plugin.getConfig().getBoolean("settings.updateAllKillsMessage")){
+            Bukkit.getLogger().info("All clan kills have been updated.");
+        }
     }
 }

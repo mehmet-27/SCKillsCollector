@@ -8,3 +8,6 @@ mysql:
 settings:
   deleteIfClanDisbanded: true
     consoleMessage: true
+  #minutes
+  updateAllKillsInterval: 60
+  updateAllKillsMessage: true

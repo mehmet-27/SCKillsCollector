@@ -25,6 +25,8 @@ public final class SCKillsCollector extends JavaPlugin {
         sqlGetter.createTable();
         sqlGetter.loadClans();
         sqlGetter.loadKills();
+
+        new UpdateKillsTask();
     }
 
     @Override
