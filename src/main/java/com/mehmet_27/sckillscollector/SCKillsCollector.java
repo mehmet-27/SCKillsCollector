@@ -3,19 +3,19 @@ package com.mehmet_27.sckillscollector;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.sql.SQLException;
+
 public final class SCKillsCollector extends JavaPlugin {
     private static SCKillsCollector instance;
 
     private MySQL mySQL;
-    public SQLGetter sqlGetter;
+    public static SQLGetter sqlGetter;
 
     @Override
     public void onEnable() {
         // Plugin startup logic
         saveDefaultConfig();
         instance = this;
-        this.getServer().getPluginManager().registerEvents(new DisbandClan(), this);
-        this.getServer().getPluginManager().registerEvents(new CreateClan(), this);
         mySQL = new MySQL(this);
         if (mySQL.getConnection() == null) {
             Bukkit.getPluginManager().disablePlugin(this);
@@ -25,6 +25,9 @@ public final class SCKillsCollector extends JavaPlugin {
         sqlGetter.createTable();
         sqlGetter.loadClans();
         sqlGetter.loadKills();
+
+        this.getServer().getPluginManager().registerEvents(new DisbandClan(), this);
+        this.getServer().getPluginManager().registerEvents(new CreateClan(), this);
 
         new UpdateKillsTask();
     }
@@ -40,5 +43,8 @@ public final class SCKillsCollector extends JavaPlugin {
     }
     public static SCKillsCollector getInstance(){
         return instance;
+    }
+    public static SQLGetter getSqlGetter(){
+        return sqlGetter;
     }
 }

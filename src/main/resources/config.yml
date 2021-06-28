@@ -6,7 +6,8 @@ mysql:
   password: "password"
 
 settings:
-  deleteIfClanDisbanded: true
+  clanDisband:
+    deleteIfClanDisbanded: true
     consoleMessage: true
   #minutes
   updateAllKillsInterval: 60

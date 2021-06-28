@@ -82,10 +82,10 @@ public class SQLGetter {
     }
 
     public void addKill(String clanTag, int kill) {
-        int oldKills = getClanKills(clanTag);
-        int newKills = oldKills + kill;
         Bukkit.getScheduler().runTaskAsynchronously(SCKillsCollector.getInstance(), () -> {
             try {
+                int oldKills = getClanKills(clanTag);
+                int newKills = oldKills + kill;
                 PreparedStatement ps = connection.prepareStatement("UPDATE `sc_clankills` SET `kills` = ? WHERE `tag` = ?");
                 ps.setInt(1, newKills);
                 ps.setString(2, clanTag);
