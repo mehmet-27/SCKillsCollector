@@ -3,8 +3,6 @@ package com.mehmet_27.sckillscollector;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.sql.SQLException;
-
 public final class SCKillsCollector extends JavaPlugin {
     private static SCKillsCollector instance;
 
@@ -23,13 +21,13 @@ public final class SCKillsCollector extends JavaPlugin {
 
         sqlGetter = new SQLGetter(this);
         sqlGetter.createTable();
-        sqlGetter.loadClans();
-        sqlGetter.loadKills();
+        sqlGetter.UpdateAllKills();
 
         this.getServer().getPluginManager().registerEvents(new DisbandClan(), this);
         this.getServer().getPluginManager().registerEvents(new CreateClan(), this);
 
-        new UpdateKillsTask();
+        new UpdateKillsTask().start();
+        getLogger().info("Automatic data update task started. Interval: " + getConfig().getInt("settings.updateAllKillsInterval") + " minutes");
     }
 
     @Override

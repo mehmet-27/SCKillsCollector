@@ -6,6 +6,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SQLGetter {
 
@@ -52,9 +54,10 @@ public class SQLGetter {
     public void addClan(String clan, String tag) {
         Bukkit.getScheduler().runTaskAsynchronously(SCKillsCollector.getInstance(), () -> {
             try {
-                PreparedStatement ps = connection.prepareStatement("INSERT IGNORE INTO sc_clankills (`clan`, `tag`) VALUES (?,?)");
+                PreparedStatement ps = connection.prepareStatement("INSERT IGNORE INTO sc_clankills (`clan`, `tag`, `kills`) VALUES (?,?,?)");
                 ps.setString(1, clan);
                 ps.setString(2, tag);
+                ps.setInt(3, 0);
                 ps.executeUpdate();
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -63,54 +66,41 @@ public class SQLGetter {
     }
 
     public void loadKills() {
-        Bukkit.getScheduler().runTaskAsynchronously(SCKillsCollector.getInstance(), () -> {
-            try {
-                PreparedStatement ps = connection.prepareStatement("SELECT * FROM `sc_players`");
-                ResultSet results = ps.executeQuery();
-                while (results.next()) {
-                    String clan = results.getString("tag");
-                    int neutralKills = results.getInt("neutral_kills");
-                    int rivalKills = results.getInt("rival_kills");
-                    int civilianKills = results.getInt("civilian_kills");
-                    int totalKills = neutralKills + rivalKills + civilianKills;
-                    addKill(clan, totalKills);
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
-    public void addKill(String clanTag, int kill) {
-        Bukkit.getScheduler().runTaskAsynchronously(SCKillsCollector.getInstance(), () -> {
-            try {
-                int oldKills = getClanKills(clanTag);
-                int newKills = oldKills + kill;
-                PreparedStatement ps = connection.prepareStatement("UPDATE `sc_clankills` SET `kills` = ? WHERE `tag` = ?");
-                ps.setInt(1, newKills);
-                ps.setString(2, clanTag);
-                ps.executeUpdate();
-                plugin.getLogger().info("kill added " + kill + " " + clanTag + " old kills: " + oldKills);
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
-    public int getClanKills(String clanTag) {
-        int kills = 0;
         try {
-            PreparedStatement ps = connection.prepareStatement("SELECT * FROM `sc_clankills` WHERE `tag` = ?");
-            ps.setString(1, clanTag);
+            HashMap<String, Integer> killsMap = new HashMap<>();
+            PreparedStatement ps = connection.prepareStatement("SELECT * FROM `sc_players`");
             ResultSet results = ps.executeQuery();
-            if (results.next()) {
-                kills = results.getInt("kills");
-                return kills;
+            while (results.next()) {
+                String clanTag = results.getString("tag");
+                int neutralKills = results.getInt("neutral_kills");
+                int rivalKills = results.getInt("rival_kills");
+                int civilianKills = results.getInt("civilian_kills");
+                int totalKills = neutralKills + rivalKills + civilianKills;
+                //addKill(clanTag, totalKills);
+                killsMap.compute(clanTag, (k, v) -> {
+                    if (v != null) return v + totalKills;
+                    return totalKills;
+                });
             }
+            addKill(killsMap);
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return kills;
+    }
+
+    public void addKill(HashMap<String, Integer> killsMap) {
+        try {
+            PreparedStatement ps = connection.prepareStatement("UPDATE `sc_clankills` SET `kills` = ? WHERE `tag` = ?");
+            for (Map.Entry<String, Integer> entry : killsMap.entrySet()) {
+                ps.setInt(1, entry.getValue());
+                ps.setString(2, entry.getKey());
+                ps.addBatch();
+                Bukkit.getLogger().info("added " + entry.getValue() + " kills to " + entry.getKey() + " clan");
+            }
+            ps.executeBatch();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public void deleteClan(String clanTag) {
@@ -124,19 +114,18 @@ public class SQLGetter {
             }
         });
     }
-    public void UpdateAllKills(){
-        Bukkit.getScheduler().runTaskAsynchronously(SCKillsCollector.getInstance(), () -> {
-            try {
-                PreparedStatement ps = connection.prepareStatement("UPDATE `sc_clankills` SET `kills` = 0 WHERE `tag`");
-                ps.executeUpdate();
-            }catch (SQLException e){
-                e.printStackTrace();
-            }
-        });
+
+    public void UpdateAllKills() {
         loadClans();
+        try {
+            PreparedStatement ps = connection.prepareStatement("UPDATE `sc_clankills` SET `kills` = 0");
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         loadKills();
-        if(plugin.getConfig().getBoolean("settings.updateAllKillsMessage")){
-            Bukkit.getLogger().info("All clan kills have been updated.");
+        if (plugin.getConfig().getBoolean("settings.updateAllKillsMessage")) {
+            plugin.getLogger().info("All clan kills have been updated.");
         }
     }
 }

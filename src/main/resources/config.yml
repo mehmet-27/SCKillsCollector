@@ -10,5 +10,5 @@ settings:
     deleteIfClanDisbanded: true
     consoleMessage: true
   #minutes
-  updateAllKillsInterval: 60
+  updateAllKillsInterval: 720
   updateAllKillsMessage: true
