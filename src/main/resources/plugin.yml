@@ -3,4 +3,6 @@ version: ${project.version}
 main: com.mehmet_27.sckillscollector.SCKillsCollector
 api-version: 1.16
 authors: [ Mehmet_27 ]
+depend:
+  - SimpleClans
 description: Clan kill collector for SimpleClans plugin
