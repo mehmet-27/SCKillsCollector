@@ -7,7 +7,7 @@ public final class SCKillsCollector extends JavaPlugin {
     private static SCKillsCollector instance;
 
     private MySQL mySQL;
-    public static SQLGetter sqlGetter;
+    private static SQLGetter sqlGetter;
 
     @Override
     public void onEnable() {
